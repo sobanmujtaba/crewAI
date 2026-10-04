@@ -1,0 +1,13 @@
+streamlit>=1.40
+pandas
+pymupdf
+python-docx
+pydantic>=2
+scikit-learn
+numpy
+groq
+python-dotenv
+pytest
+# Optional, heavier semantic search (used automatically when installed):
+# sentence-transformers
+# faiss-cpu
