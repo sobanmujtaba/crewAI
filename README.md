@@ -1,79 +1,119 @@
 # CrewAI: AI Mortgage Underwriting Assistant
 
-A Streamlit copilot for a human mortgage underwriter. It reads loan documents, runs the maths in plain
-Python, finds discrepancies and large deposits, retrieves guideline text, and drafts conditions.
-**The AI assists. The underwriter makes the final decision.** All demo data is fictional.
+A Streamlit copilot for a human mortgage underwriter. It reads loan documents, runs the math in plain Python, finds what does not line up, retrieves relevant guideline text, and drafts conditions. **The AI assists. The underwriter makes the final decision.**
 
-## Features
-- Upload PDF, DOCX or TXT documents, auto-classify them, extract values with page references
-- OCR fallback for scanned PDFs, and a clear "manual review required" message when extraction fails
-- DTI, LTV, funds to close and reserves calculated in code, with inputs and sources shown
-- Document checklist: Complete, Missing, Outdated, Review Required, Not Applicable
-- Cross-document discrepancy detection (income, employer, assets, property value)
-- Large deposit detection with a configurable threshold, and own-account transfer matching
-- Local guideline search (TF-IDF by default, FAISS embeddings optional)
-- AI underwriting analysis through Groq, validated with Pydantic
-- Evidence viewer, conditions management, resubmission comparison, decision panel, SQLite audit trail
-- Built-in fictional demo loan with four deliberate issues, no API key needed
+All demo and sample data in this repository is **fictional**.
 
-## Workflow
-Document > Evidence > Calculation > Guideline > Finding > Condition > Human decision
+## What it does
 
-## Quick start
-```bash
-git clone <your-repo-url> && cd <your-repo>
-python3.11 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env               # Windows: copy .env.example .env
-streamlit run app.py
-```
-Open http://localhost:8501. Without an API key everything works except the AI analysis page.
-
-## Configuration
-Set these in `.env`:
-```
-GROQ_API_KEY=gsk_...
-GROQ_MODEL=openai/gpt-oss-120b
-```
-Optional: `USE_EMBEDDINGS=1` turns on FAISS + sentence-transformers search (needs
-`pip install sentence-transformers faiss-cpu`, first run downloads a model).
-For OCR, install the Tesseract program (`packages.txt` does this on Streamlit Cloud).
-
-## Deploy to Streamlit Community Cloud
-1. Push the repo to GitHub. `.env` is git-ignored, never commit keys.
-2. At share.streamlit.io choose New app, select the repo, main file `app.py`.
-3. Open Settings > Secrets and paste:
-```toml
-GROQ_API_KEY = "gsk_..."
-GROQ_MODEL = "openai/gpt-oss-120b"
-```
-The SQLite file resets when the cloud app restarts, so treat it as prototype storage.
-
-## Using your own loan files
-1. Sidebar: set Loan file to **Uploaded loan**.
-2. Documents page: upload files, click **Process documents**.
-3. Borrower page: enter monthly debt (not extracted automatically).
+- Extracts fields from PDF, DOCX and TXT files with page-level sources
+- Classifies documents and checks completeness (Complete, Missing, Outdated, Review Required, Not Applicable)
+- Calculates DTI, LTV, funds to close and reserves in code, never with the LLM
+- Compares values across documents (income, employer, assets, property value) without choosing a winner
+- Flags large non-payroll deposits and matches own-account transfers
+- Searches local guidelines and separates source text from AI interpretation
+- Produces a structured AI analysis (Groq) that is validated with Pydantic
+- Manages conditions, resubmission comparison, an audit trail and the human decision
+- Runs without an API key (demo loan, calculations, discrepancies, guideline search)
 
 ## Project structure
+
+```text
+app.py                      Streamlit UI (9 pages)
+src/
+  document_processor.py     File reading, classification, field and transaction extraction
+  calculations.py           DTI, LTV, payment, funds to close, reserves
+  discrepancy_engine.py     Checklist, cross-document comparison, large deposits
+  guideline_rag.py          Guideline chunking and retrieval (TF-IDF, optional FAISS)
+  underwriting.py           Findings, suggested conditions, AI context
+  llm.py                    Groq client and structured output
+  database.py               SQLite audit log, conditions, decisions
+  models.py                 Pydantic schemas
+  demo.py                   Fictional demo loan
+data/
+  guidelines/               Guideline files (.txt or .md)
+  files/                    Fictional sample borrower documents for testing
+tests/                      Unit tests
 ```
-app.py                     Streamlit UI (all pages)
-src/document_processor.py  read, classify, extract facts and transactions
-src/calculations.py        DTI, LTV, funds to close, reserves
-src/discrepancy_engine.py  checklist, discrepancies, large deposits
-src/guideline_rag.py       guideline chunking and search
-src/underwriting.py        findings, suggested conditions, AI context
-src/llm.py                 Groq access (only file that knows the provider)
-src/database.py            SQLite audit, conditions, decisions
-src/models.py              Pydantic schemas
-src/demo.py                fictional demo loan
-data/guidelines/           guideline text (.txt or .md)
-tests/                     pytest suite
+
+## Setup
+
+### 1. Clone the repository
+```bash
+git clone [https://github.com/sobanmujtaba/crewAI.git](https://github.com/sobanmujtaba/crewAI.git)
+cd crewAI
+
+2. Create a virtual environment (Python 3.11 or newer)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 ```
-Run tests with `pytest`.
+
+3. Install requirements
+```bash
+pip install -r requirements.txt
+```
+
+4. Configure environment variables
+```bash
+cp .env.example .env
+```
+Edit `.env`:
+```text
+GROQ_API_KEY=gsk_your_key_here
+GROQ_MODEL=openai/gpt-oss-120b
+```
+Get a key at https://console.groq.com. Never commit `.env`.
+
+5. Run
+```bash
+streamlit run app.py
+```
+
+6. Test
+```bash
+pytest
+```
+
+## How to use
+
+1. Start with the **Demo loan** in the sidebar to see the full workflow.
+2. To use your own files, switch to **Uploaded loan**, open **Documents**, upload files, then click **Process documents**.
+3. Open **Borrower** and enter monthly debt, which is not extracted automatically.
+4. Review **Discrepancies**, **Guidelines** and **AI Underwriting**.
+5. Accept or edit **Conditions**, then record the **Underwriter Decision**.
+
+Sample borrower files are in `data/files/`.
+
+## Optional settings
+
+| Variable | Purpose |
+|---|---|
+| `GROQ_MODEL` | Model ID. Default `openai/gpt-oss-120b` |
+| `USE_EMBEDDINGS=1` | Use FAISS and sentence-transformers instead of TF-IDF (needs `pip install sentence-transformers faiss-cpu`) |
+
+Large deposit threshold, closing cost percentage and interest rate are editable in the app sidebar under Settings.
+
+## Deploy to Streamlit Community Cloud
+
+1. Push the repo to GitHub. Keep `.env` and `data/*.db` out of Git (see `.gitignore`).
+2. Go to https://share.streamlit.io, choose **New app**, select the repo and set the main file to `app.py`.
+3. Open **App settings > Secrets** and add:
+```toml
+GROQ_API_KEY = "gsk_your_key_here"
+GROQ_MODEL = "openai/gpt-oss-120b"
+```
+4. Deploy. `packages.txt` installs Tesseract for OCR on scanned PDFs.
+
+The SQLite file resets when the cloud app restarts, so treat it as prototype storage.
 
 ## Limitations
-- Extraction uses regex patterns, so unusual document layouts need new patterns
-- Monthly debt and multi-statement asset totals are not calculated automatically
-- Guidelines are a fictional demo set, not real lending rules. Verify against official sources
-- Not a lending decision system. Prototype for demonstration and education only
+
+- Extraction uses pattern matching, so unusual document layouts may be missed. Unreadable documents are flagged for manual review, never guessed.
+- Guidelines in this repository are a fictional demonstration set. Add your own permitted guideline files to `data/guidelines/`.
+- Financial Analysis uses the first bank statement's ending balance as verified assets.
+- This is a prototype. It is not a lending decision system and must not be used for real loan decisions without full review.
+
+## License
+
+Add a license of your choice (for example MIT) before publishing.
