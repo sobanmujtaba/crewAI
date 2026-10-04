@@ -40,7 +40,7 @@ tests/                      Unit tests
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/sobanmujtaba/crewAI.git](https://github.com/sobanmujtaba/crewAI.git)
+gh repo clone sobanmujtaba/crewAI
 cd crewAI
 ```
 
