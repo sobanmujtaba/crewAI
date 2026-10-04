@@ -42,6 +42,7 @@ tests/                      Unit tests
 ```bash
 git clone [https://github.com/sobanmujtaba/crewAI.git](https://github.com/sobanmujtaba/crewAI.git)
 cd crewAI
+```
 
 2. Create a virtual environment (Python 3.11 or newer)
 ```bash
